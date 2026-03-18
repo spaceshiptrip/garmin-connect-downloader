@@ -7,3 +7,6 @@ __pycache__/
 tuesday_gpx/
 *.json
 *.csv
+april_2025_gpx/
+coconino_gpx/
+marshal_gpx/

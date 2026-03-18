@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import argparse
 import csv
 from datetime import date, datetime, timedelta
@@ -140,6 +141,25 @@ def get_elevation_gain(activity: dict[str, Any]) -> float | None:
     return None
 
 
+def matches_name_patterns(
+    activity: dict[str, Any],
+    include_patterns: list[str],
+    exclude_patterns: list[str],
+) -> bool:
+    name = get_activity_name(activity).lower()
+
+    include_patterns = [p.lower() for p in include_patterns if p.strip()]
+    exclude_patterns = [p.lower() for p in exclude_patterns if p.strip()]
+
+    if include_patterns and not any(
+        fnmatch.fnmatch(name, pattern) for pattern in include_patterns):
+        return False
+
+    if exclude_patterns and any(
+        fnmatch.fnmatch(name, pattern) for pattern in exclude_patterns):
+        return False
+
+    return True
 # ----------------------------
 # Interval filtering
 # ----------------------------
@@ -201,7 +221,7 @@ SPORT_ALIASES = {
     "mountain_biking": {"mountain_biking"},
     "strength_training": {"strength_training"},
     "swimming": {"swimming", "lap_swimming", "open_water_swimming"},
-    "pickleball": {"pickleball"},   
+    "pickleball": {"pickleball"},
 }
 
 
@@ -438,6 +458,25 @@ def build_parser() -> argparse.ArgumentParser:
         default="download_summary.csv",
         help="Path to write CSV summary.",
     )
+    parser.add_argument(
+        "--name-pattern",
+        action="append",
+        default=[],
+        help=(
+            "Activity name wildcard pattern, case-insensitive. "
+            "Can be repeated. Examples: 'Marshal*', 'Home*', '*Baldy*'"
+        ),
+    )
+    parser.add_argument(
+        "--exclude-name-pattern",
+        action="append",
+        default=[],
+        help=(
+            "Exclude activity name wildcard pattern, case-insensitive. "
+            "Can be repeated."
+        ),
+    )
+
 
     return parser
 
@@ -470,6 +509,7 @@ def main() -> int:
         fetch_limit=args.limit,
     )
 
+
     matched: list[dict[str, Any]] = []
     for act in candidates:
         act_date = parse_activity_date(act)
@@ -479,14 +519,13 @@ def main() -> int:
             continue
         if not matches_sport(act, args.sport):
             continue
+        if not matches_name_patterns(
+            act,
+            args.name_pattern,
+            args.exclude_name_pattern,
+        ):
+            continue
         matched.append(act)
-
-    matched.sort(
-        key=lambda a: (
-            parse_activity_date(a) or date.min,
-            get_activity_id(a) or 0,
-        )
-    )
 
     print(f"Matched {len(matched)} activities.")
 

@@ -1,6 +1,6 @@
 from datetime import date
 
-from garmin_activity_downloader import matches_interval, matches_sport
+from garmin_activity_downloader import matches_interval, matches_sport, matches_name_patterns 
 
 
 def test_matches_interval_every_day():
@@ -43,3 +43,25 @@ def test_matches_sport_trail_running_by_name():
 def test_matches_sport_any():
     activity = {"activityType": {"typeKey": "pickleball"}, "activityName": "Glendale Pickleball"}
     assert matches_sport(activity, "any")
+
+def test_matches_name_patterns_case_insensitive_contains():
+    activity = {"activityName": "La Verne Route"}
+    assert matches_name_patterns(activity, ["*la*verne*"], []) is True
+    assert matches_name_patterns(activity, ["*La*Verne*"], []) is True
+    assert matches_name_patterns(activity, ["*LA*VERNE*"], []) is True
+
+
+def test_matches_name_patterns_wildcard_no_match():
+    activity = {"activityName": "La Verne Route"}
+    assert matches_name_patterns(activity, ["*Marshal*"], []) is False
+
+
+def test_matches_name_patterns_prefix_match():
+    activity = {"activityName": "Home to Trail"}
+    assert matches_name_patterns(activity, ["Home*"], []) is True
+    assert matches_name_patterns(activity, ["home*"], []) is True
+
+
+def test_matches_name_patterns_exclude_pattern():
+    activity = {"activityName": "La Verne Test Route"}
+    assert matches_name_patterns(activity, ["*La*Verne*"], ["*test*"]) is False
