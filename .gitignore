@@ -1,0 +1,9 @@
+.venv/
+test_env/
+__pycache__/
+*.pyc
+.DS_Store
+
+tuesday_gpx/
+*.json
+*.csv
