@@ -201,6 +201,7 @@ SPORT_ALIASES = {
     "mountain_biking": {"mountain_biking"},
     "strength_training": {"strength_training"},
     "swimming": {"swimming", "lap_swimming", "open_water_swimming"},
+    "pickleball": {"pickleball"},   
 }
 
 
@@ -218,8 +219,10 @@ def matches_sport(activity: dict[str, Any], sport_filter: str) -> bool:
         # Bias toward keeping obvious trail activities.
         return type_key in allowed or ("trail" in name and "run" in name)
 
-    return type_key in allowed
+    if sport_filter == "pickleball":
+        return type_key in allowed or "pickleball" in name
 
+    return type_key in allowed
 
 # ----------------------------
 # Download format mapping
